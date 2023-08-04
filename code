@@ -1,0 +1,36 @@
+import pandas as pd
+
+# Step 1: Provide the condition name
+condition_name = 'John'
+
+# Step 2: Read Excel file and get sheet names
+file_path = 'file_path.xlsx'  # Replace with the path to your Excel file
+xls = pd.ExcelFile(file_path)
+sheet_names = xls.sheet_names
+
+# Step 3: Loop through each sheet
+for sheet_name in sheet_names:
+    # Read the data from the current sheet
+    df = pd.read_excel(file_path, sheet_name=sheet_name)
+    
+    # Identify the row containing the condition_name and get its index
+    condition_row = df.index[df.eq(condition_name).any(axis=1)]
+    
+    if condition_row.empty:
+        print(f"'{condition_name}' not found in sheet '{sheet_name}'.")
+        continue
+    
+    # Transpose the DataFrame to align names and ages correctly
+    df_transposed = df.transpose()
+    
+    # Get the age column by selecting the column corresponding to the condition_name row
+    age_column = df_transposed[condition_row[0]]
+    
+    # Drop the row with the name as it is no longer needed in the result
+    df_transposed.drop(condition_row[0], inplace=True)
+    
+    # Create a new DataFrame containing only the ages for the given name
+    result_df = pd.DataFrame({'Age': age_column})
+    
+    print(f"Data for '{condition_name}' in sheet '{sheet_name}':")
+    print(result_df)
