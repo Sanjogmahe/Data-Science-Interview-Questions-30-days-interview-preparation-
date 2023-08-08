@@ -1,103 +1,41 @@
 import pandas as pd
-
-# Step 1: Provide the condition name
-condition_name = 'John'
-
-# Step 2: Read Excel file and get sheet names
-file_path = 'file_path.xlsx'  # Replace with the path to your Excel file
-xls = pd.ExcelFile(file_path)
-sheet_names = xls.sheet_names
-
-# Step 3: Loop through each sheet
-for sheet_name in sheet_names:
-    # Read the data from the current sheet
-    df = pd.read_excel(file_path, sheet_name=sheet_name)
-    
-    # Identify the row containing the condition_name and get its index
-    condition_row = df.index[df.eq(condition_name).any(axis=1)]
-    
-    if condition_row.empty:
-        print(f"'{condition_name}' not found in sheet '{sheet_name}'.")
-        continue
-    
-    # Transpose the DataFrame to align names and ages correctly
-    df_transposed = df.transpose()
-    
-    # Get the age column by selecting the column corresponding to the condition_name row
-    age_column = df_transposed[condition_row[0]]
-    
-    # Drop the row with the name as it is no longer needed in the result
-    df_transposed.drop(condition_row[0], inplace=True)
-    
-    # Create a new DataFrame containing only the ages for the given name
-    result_df = pd.DataFrame({'Age': age_column})
-    
-    print(f"Data for '{condition_name}' in sheet '{sheet_name}':")
-    print(result_df)
-
-import pandas as pd
 import json
 
-def normalize_json(json_data):
-    df = pd.json_normalize(json_data)
-    
-    def custom_normalize(value):
-        if pd.notna(value):
-            try:
-                numeric_value = float(value)
-                if numeric_value.is_integer():
-                    return int(numeric_value)
-                else:
-                    return numeric_value
-            except ValueError:
-                return value
-        return None
-    
-    df = df.applymap(custom_normalize)
-    return df
-
-# Example JSON data
-json_data = {
-    "key1": "1.23",
-    "key2": 4,
-    "key3": "5.67",
-    "key4": "string value",
-    "key5": None
-}
-
-normalized_df = normalize_json(json_data)
-print(normalized_df)
-
-import pandas as pd
-import json
-
-def custom_normalize(data):
+def normalize_json(json_obj):
     def recursive_normalize(item):
         if isinstance(item, dict):
-            return {key: recursive_normalize(value) for key, value in item.items()}
+            normalized_dict = {}
+            for key, value in item.items():
+                normalized_dict[key] = recursive_normalize(value)
+            return normalized_dict
         elif isinstance(item, list):
             return [recursive_normalize(value) for value in item]
         elif item is None:
             return None
         else:
             try:
-                return int(item) if int(item) == float(item) else float(item)
+                int_value = int(item)
+                return int_value if str(int_value) == item else float(item)
             except ValueError:
-                return item
+                try:
+                    return float(item)
+                except ValueError:
+                    return item
 
-    return recursive_normalize(data)
+    normalized_data = recursive_normalize(json_obj)
+    return pd.json_normalize(normalized_data)
 
-# Example JSON data
+# Example nested JSON data
 json_data = {
     "key1": "1.23",
     "key2": 4,
-    "key3": "5.67",
-    "key4": "string value",
-    "key5": None
+    "key3": {
+        "subkey1": "5.67",
+        "subkey2": 10,
+        "subkey3": None
+    },
+    "key4": None
 }
 
-normalized_data = custom_normalize(json_data)
-normalized_df = pd.json_normalize(normalized_data)
+normalized_df = normalize_json(json_data)
 print(normalized_df)
-
-
