@@ -34,3 +34,37 @@ for sheet_name in sheet_names:
     
     print(f"Data for '{condition_name}' in sheet '{sheet_name}':")
     print(result_df)
+
+import pandas as pd
+import json
+
+def normalize_json(json_data):
+    df = pd.json_normalize(json_data)
+    
+    def custom_normalize(value):
+        if pd.notna(value):
+            try:
+                numeric_value = float(value)
+                if numeric_value.is_integer():
+                    return int(numeric_value)
+                else:
+                    return numeric_value
+            except ValueError:
+                return value
+        return None
+    
+    df = df.applymap(custom_normalize)
+    return df
+
+# Example JSON data
+json_data = {
+    "key1": "1.23",
+    "key2": 4,
+    "key3": "5.67",
+    "key4": "string value",
+    "key5": None
+}
+
+normalized_df = normalize_json(json_data)
+print(normalized_df)
+
