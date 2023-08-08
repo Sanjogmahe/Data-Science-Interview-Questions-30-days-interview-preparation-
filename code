@@ -68,3 +68,36 @@ json_data = {
 normalized_df = normalize_json(json_data)
 print(normalized_df)
 
+import pandas as pd
+import json
+
+def custom_normalize(data):
+    def recursive_normalize(item):
+        if isinstance(item, dict):
+            return {key: recursive_normalize(value) for key, value in item.items()}
+        elif isinstance(item, list):
+            return [recursive_normalize(value) for value in item]
+        elif item is None:
+            return None
+        else:
+            try:
+                return int(item) if int(item) == float(item) else float(item)
+            except ValueError:
+                return item
+
+    return recursive_normalize(data)
+
+# Example JSON data
+json_data = {
+    "key1": "1.23",
+    "key2": 4,
+    "key3": "5.67",
+    "key4": "string value",
+    "key5": None
+}
+
+normalized_data = custom_normalize(json_data)
+normalized_df = pd.json_normalize(normalized_data)
+print(normalized_df)
+
+
